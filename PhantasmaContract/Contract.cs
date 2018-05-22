@@ -242,10 +242,18 @@ namespace Neo.SmartContract
                     return WhitelistCheckAll(args);
                 }
 
-                else if (operation == "whitelistAdd")
+                else if (operation == "whitelistAddMax")
                 {
                     if (args.Length == 0) return false;
-                    return WhitelistAdd(args);
+                    return WhitelistAddMax(args);
+                }
+
+                else if (operation == "whitelistAddCap")
+                {
+                    if (args.Length != 2) return false;
+                    BigInteger value = (BigInteger) args[0];
+                    object[] addresses = (object[]) args[1];
+                    return WhitelistAddCap(value, addresses);
                 }
 
                 else if (operation == "whitelistRemove")
@@ -811,8 +819,8 @@ namespace Neo.SmartContract
             return false;
         }
 
-        // adds address to the whitelist
-        public static bool WhitelistAdd(object[] addresses)
+        // adds addresses to the whitelist
+        public static bool WhitelistAddMax(object[] addresses)
         {
             if (!IsWhitelistingWitness())
                 return false;
@@ -830,7 +838,33 @@ namespace Neo.SmartContract
                     continue;
                 }
 
-                val = 1;
+                val = token_initial_cap; // default round1 cap
+                Storage.Put(Storage.CurrentContext, key, val);
+                OnWhitelistAdd(addressScriptHash);
+            }
+
+            return true;
+        }
+
+        public static bool WhitelistAddCap(BigInteger amount, object[] addresses)
+        {
+            if (!IsWhitelistingWitness())
+                return false;
+
+            foreach (var entry in addresses)
+            {
+                var addressScriptHash = (byte[])entry;
+                if (!ValidateAddress(addressScriptHash))
+                    continue;
+
+                var key = whitelist_prefix.Concat(addressScriptHash);
+                var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+                if (val > 0)
+                {
+                    continue;
+                }
+
+                val = amount; // specific individual round1 cap
                 Storage.Put(Storage.CurrentContext, key, val);
                 OnWhitelistAdd(addressScriptHash);
             }
