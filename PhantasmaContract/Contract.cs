@@ -707,6 +707,7 @@ namespace Neo.SmartContract
         public static readonly byte[] Advisor_Address = "AKvFhNqJUkGzHCiwrEAfSEG3fP1fNtji1F".ToScriptHash();
         public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
+        public static readonly byte[] Sale1_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
@@ -729,6 +730,8 @@ namespace Neo.SmartContract
         public const ulong advisor_supply = 5500000 * soul_decimals; // advisor token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
         public const ulong presale_supply = 43503435 * soul_decimals; // presale token amount
+
+        public const ulong sale1_supply = 1200000 * soul_decimals; // sale1 token amount. *temporary*
 
         public const ulong team_monthly_supply = 1450000 * soul_decimals; // team monthly share
         public const ulong advisor_monthly_supply = 550000 * soul_decimals; // advisor monthly share
@@ -755,13 +758,11 @@ namespace Neo.SmartContract
         private static readonly byte[] mint_prefix = { (byte)'M', (byte)'I', (byte)'N', (byte)'T' };
 
         // checks if address is on the whitelist
-        public static bool WhitelistCheckOne(byte[] address)
+        public static BigInteger WhitelistCheckOne(byte[] address)
         {
-            if (!ValidateAddress(address)) return false;
+            if (!ValidateAddress(address)) return 0;
             var key = whitelist_prefix.Concat(address);
-            var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-            if (val > 0) return true;
-            else return false;
+            return Storage.Get(Storage.CurrentContext, key).AsBigInteger();
         }
 
         // checks if addresses are on the whitelist
@@ -876,9 +877,12 @@ namespace Neo.SmartContract
                 return false;
             }
 
-            var initialSupply = team_supply + advisor_supply + presale_supply + platform_supply;
+            var initialSupply = team_supply + advisor_supply + presale_supply + platform_supply + sale1_supply;
 
             // team and advisor supply is locked, storage stays at zero here
+
+            OnMint(Sale1_Address, sale1_supply);
+            Storage.Put(Storage.CurrentContext, Sale1_Address, sale1_supply);
 
             OnMint(Presale_Address, presale_supply);
             Storage.Put(Storage.CurrentContext, Presale_Address, presale_supply);
@@ -978,8 +982,8 @@ namespace Neo.SmartContract
             var total_bought = Storage.Get(Storage.CurrentContext, bought_key).AsBigInteger();
 
             var whitelist_key = whitelist_prefix.Concat(sender);
-            var whitelist_entry = Storage.Get(Storage.CurrentContext, whitelist_key).AsBigInteger();
-            if (whitelist_entry <= 0) // not whitelisted
+            var whitelist_cap = Storage.Get(Storage.CurrentContext, whitelist_key).AsBigInteger();
+            if (whitelist_cap <= 0) // not whitelisted
             {
                 tokens_to_refund += tokens_to_give;
                 tokens_to_give = 0;
@@ -993,7 +997,7 @@ namespace Neo.SmartContract
 
                 if (cur_time < ico_war_time)
                 {
-                    individual_cap = token_initial_cap;
+                    individual_cap = whitelist_cap;
                 }
                 else
                 {
