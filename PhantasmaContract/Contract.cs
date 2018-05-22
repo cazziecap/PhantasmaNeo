@@ -831,10 +831,7 @@ namespace Neo.SmartContract
 
                 var key = whitelist_prefix.Concat(addressScriptHash);
                 var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-                if (val > 0)
-                {
-                    continue;
-                }
+                if (val > 0) continue;
 
                 val = token_initial_cap; // default round1 cap
                 Storage.Put(Storage.CurrentContext, key, val);
@@ -859,13 +856,11 @@ namespace Neo.SmartContract
                     continue;
 
                 var key = whitelist_prefix.Concat(addressScriptHash);
-                var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-                if (val > 0)
-                {
-                    continue;
-                }
+                // var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+                // IMPORTANT: allow overwrites to fix upload mistakes with wrong amount
+                // if (val > 0) continue;
 
-                val = amount; // specific individual round1 cap
+                var val = amount; // specific individual round1 cap
                 Storage.Put(Storage.CurrentContext, key, val);
                 OnWhitelistAdd(addressScriptHash);
             }
