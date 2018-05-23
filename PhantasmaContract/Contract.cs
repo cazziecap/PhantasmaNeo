@@ -250,10 +250,8 @@ namespace Neo.SmartContract
 
                 else if (operation == "whitelistAddCap")
                 {
-                    if (args.Length != 2) return false;
-                    BigInteger value = (BigInteger) args[0];
-                    object[] addresses = (object[]) args[1];
-                    return WhitelistAddCap(value, addresses);
+                    if (args.Length < 2) return false;
+                    return WhitelistAddCap(args);
                 }
 
                 else if (operation == "whitelistRemove")
@@ -846,14 +844,17 @@ namespace Neo.SmartContract
             return true;
         }
 
-        public static bool WhitelistAddCap(BigInteger amount, object[] addresses)
+        public static bool WhitelistAddCap(object[] args)
         {
+            if (args.Length < 2) return false;
+            BigInteger amount = (BigInteger)args[0];
+
             if (!IsWhitelistingWitness())
                 return false;
 
-            foreach (var entry in addresses)
+            for (int i = 1; i < args.Length; i = i+1)
             {
-                var addressScriptHash = (byte[])entry;
+                var addressScriptHash = (byte[]) args[i];
                 if (!ValidateAddress(addressScriptHash))
                     continue;
 
