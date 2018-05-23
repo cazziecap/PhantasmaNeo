@@ -749,7 +749,7 @@ namespace Neo.SmartContract
 
         public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
         public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
-        public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
+        public const uint ico_end_time = ico_war_time; // 29 May 00h00 UTC
 
         [DisplayName("whitelist_add")]
         public static event Action<byte[]> OnWhitelistAdd;
@@ -1043,14 +1043,10 @@ namespace Neo.SmartContract
                 // check individual cap
                 BigInteger individual_cap;
 
-                if (cur_time < ico_war_time)
-                {
+                // if (cur_time < ico_war_tim)
                     individual_cap = whitelist_cap;
-                }
-                else
-                {
-                    individual_cap = token_war_cap;
-                }
+                // else
+                //    individual_cap = token_war_cap;
 
                 if (new_balance > individual_cap)
                 {
